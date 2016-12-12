@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="ISO-8859-1" standalone="no" ?> 
+<!DOCTYPE Policies SYSTEM "../dtd/accesscontrolpolicies.dtd">
+
+<Policies>
+
+<Action Name="ExecuteCommand"  CommandName="Execute"/>
+<Action Name="ZCOrderInformationResponseView" 
+            CommandName="ZCOrderInformationResponseView">
+    </Action>
+<ActionGroup Name="AllSiteUsersViews" 
+             OwnerID="RootOrganization">
+             <ActionGroupAction Name="ZCOrderInformationResponseView"/>
+</ActionGroup>
+	<ResourceCategory Name="com.zobristinc.commerce.integration.apruve.commands.ZCReturnFromApruveCmdResourceCategory"
+			ResourceBeanClass="com.zobristinc.commerce.integration.apruve.commands.ZCReturnFromApruveCmd">
+		<ResourceAction Name="ExecuteCommand" />
+	</ResourceCategory>
+	
+	<ResourceCategory Name="com.zobristinc.commerce.integration.apruve.commands.ZCOrderInformationCmdResourceCategory"
+			ResourceBeanClass="com.zobristinc.commerce.integration.apruve.commands.ZCOrderInformationCmd">
+		<ResourceAction Name="ExecuteCommand" />
+	</ResourceCategory>
+	
+	<ResourceCategory Name="com.zobristinc.commerce.integration.apruve.commands.ZCApruveProcessWebhookResponseCmdResourceCategory"
+			ResourceBeanClass="com.zobristinc.commerce.integration.apruve.commands.ZCApruveProcessWebhookResponseCmd">
+		<ResourceAction Name="ExecuteCommand" />
+	</ResourceCategory>
+	
+	<ResourceGroup Name="BecomeUserCmdsResourceGroup"  OwnerID="RootOrganization">
+		<ResourceGroupResource Name="com.zobristinc.commerce.integration.apruve.commands.ZCReturnFromApruveCmdResourceCategory" />
+		<ResourceGroupResource Name="com.zobristinc.commerce.integration.apruve.commands.ZCOrderInformationCmdResourceCategory" />
+		<ResourceGroupResource Name="com.zobristinc.commerce.integration.apruve.commands.ZCApruveProcessWebhookResponseCmdResourceCategory" />
+	</ResourceGroup>
+<ResourceGroup Name="AllSiteUserCmdResourceGroup"  OwnerID="RootOrganization">
+	<ResourceGroupResource Name="com.zobristinc.commerce.integration.apruve.commands.ZCReturnFromApruveCmdResourceCategory" />
+	<ResourceGroupResource Name="com.zobristinc.commerce.integration.apruve.commands.ZCOrderInformationCmdResourceCategory" />
+	<ResourceGroupResource Name="com.zobristinc.commerce.integration.apruve.commands.ZCApruveProcessWebhookResponseCmdResourceCategory" />
+	</ResourceGroup>
+
+</Policies>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Plugin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <PluginInformation 
+        jndi="ejb/com/apruve/payment/plugin/ZApruvePaymentPluginHome" 
+        home="com.apruve.payment.plugin.ZApruvePaymentPluginHome"
+                name="ZApruvePaymentPlugin" 
+                version="1.0.0" 
+                vendor="Apruve"
+                independentCredit="true" >
+	  <ProtocolProperties>
+	 	<ProtocolProperty name="apruveId" keep="true"/>
+		<ProtocolProperty name="langId" keep="true"/>
+	  </ProtocolProperties>
+  </PluginInformation>
+</Plugin>

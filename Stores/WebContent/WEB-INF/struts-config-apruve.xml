@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+<struts-config>
+
+<global-forwards>
+<forward className="com.ibm.commerce.struts.ECActionForward" name="StandardApruve/10101" path="/Snippets/EDP/PaymentMethods/StandardApruve.jsp"/>
+<forward className="com.ibm.commerce.struts.ECActionForward" name="StandardApruve/10151" path="/Snippets/EDP/PaymentMethods/StandardApruve.jsp"/>
+</global-forwards>
+<action-mappings type="com.ibm.commerce.struts.ECActionMapping">
+<action path="/StandardApruve" type="com.ibm.commerce.struts.BaseAction"/>
+<action parameter="com.zobristinc.commerce.integration.apruve.commands.ZCReturnFromApruveCmd" path="/ZCReturnFromApruve" type="com.ibm.commerce.struts.BaseAction" />
+<action parameter="com.zobristinc.commerce.integration.apruve.commands.ZCOrderInformationCmd" path="/ZCOrderInformation" type="com.ibm.commerce.struts.BaseAction" />
+<action parameter="com.zobristinc.commerce.integration.apruve.commands.ZCApruveProcessWebhookResponseCmd" path="/ZCApruveProcessWebhookResponse" type="com.ibm.commerce.struts.BaseAction" />
+</action-mappings>
+</struts-config>

@@ -1,0 +1,808 @@
+<%try{%><%--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2015 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+--%>
+<%--
+*****
+This JSP file is a fragment that displays the Billing Information section of the Shipping and Billing page of the store.
+The section lets shoppers enter the payment information for their orders. It supports 3 separate payment methods in an
+order.
+*****
+--%>
+<%-- Apruve requirement - start --%>
+<%@ page import="com.ibm.json.java.JSONObject"%>
+<script src="https://test.apruve.com/js/v4/apruve.js" type="text/javascript"></script>
+<%-- Apruve requirement - end --%>
+<!-- BEGIN CheckoutPaymentsAndBillingAddress.jspf -->
+<script type="text/javascript" src="<c:out value='${jsAssetsDir}javascript/CheckoutArea/CheckoutPayments.js'/>"></script>
+<script type="text/javascript" src="<c:out value='${jsAssetsDir}javascript/CheckoutArea/CheckoutHelper.js'/>"></script>
+<c:if test="${isBrazilStore}"> 
+	<script type="text/javascript" src="<c:out value="${jsAssetsDir}javascript/UserArea/MyBrazilAccountDisplay.js"/>"></script>
+</c:if>
+<script type="text/javascript">
+	<flow:ifEnabled feature="Analytics">
+		analyticsJS.loadPaymentPageView(CheckoutPayments);
+	</flow:ifEnabled>
+
+	var paymentSnippetsURLMap = {};
+	<c:forEach var="payment" varStatus="paymentCounter" items="${usablePaymentInfo.usablePaymentInformation}">
+		<c:if test="${payment.paymentMethodName != 'PayInStore'}">
+			paymentSnippetsURLMap['<c:out value="${payment.paymentMethodName}" />'] = '<c:out value="${payment.xumet_attrPageName}" />';
+		</c:if>
+	</c:forEach>
+	
+	require(["dojo/domReady!"], function(){
+		<fmt:message bundle="${storeText}" key="EDPPaymentMethods_CANNOT_RECONCILE_PAYMENT_AMT" var="EDPPaymentMethods_CANNOT_RECONCILE_PAYMENT_AMT"/>
+		<fmt:message bundle="${storeText}" key="EDPPaymentMethods_PAYMENT_AMOUNT_LARGER_THAN_ORDER_AMOUNT" var="EDPPaymentMethods_PAYMENT_AMOUNT_LARGER_THAN_ORDER_AMOUNT"/>
+		<fmt:message bundle="${storeText}" key="EDPPaymentMethods_NO_ACCOUNT_NUMBER" var="EDPPaymentMethods_NO_ACCOUNT_NUMBER"/>
+		<fmt:message bundle="${storeText}" key="EDPPaymentMethods_INVALID_EXPIRY_DATE" var="EDPPaymentMethods_INVALID_EXPIRY_DATE"/>
+		<fmt:message bundle="${storeText}" key="EDPPaymentMethods_NO_AMOUNT" var="EDPPaymentMethods_NO_AMOUNT"/>
+		<fmt:message bundle="${storeText}" key="EDPPaymentMethods_AMOUNT_NAN" var="EDPPaymentMethods_AMOUNT_NAN"/>
+		<fmt:message bundle="${storeText}" key="EDPPaymentMethods_AMOUNT_LT_ZERO" var="EDPPaymentMethods_AMOUNT_LT_ZERO"/>
+		<fmt:message bundle="${storeText}" key="EDPPaymentMethods_NO_BILLING_ADDRESS" var="EDPPaymentMethods_NO_BILLING_ADDRESS"/>
+		<fmt:message bundle="${storeText}" key="EDPPaymentMethods_BILLING_ADDRESS_INVALID" var="EDPPaymentMethods_BILLING_ADDRESS_INVALID"/>
+		<fmt:message bundle="${storeText}" key="EDPPaymentMethods_CVV_NOT_NUMERIC" var="EDPPaymentMethods_CVV_NOT_NUMERIC"/>
+		<fmt:message bundle="${storeText}" key="EDPPaymentMethods_PAYMENT_AMOUNT_PROBLEM" var="EDPPaymentMethods_PAYMENT_AMOUNT_PROBLEM"/>
+		<fmt:message bundle="${storeText}" key="EDPPaymentMethods_NO_PAYMENT_SELECTED" var="EDPPaymentMethods_NO_PAYMENT_SELECTED"/>
+		<fmt:message bundle="${storeText}" key="EDPPaymentMethods_NO_ROUTING_NUMBER" var="EDPPaymentMethods_NO_ROUTING_NUMBER"/>
+		<fmt:message bundle="${storeText}" key="EDPPaymentMethods_NO_BANK_ACCOUNT_NO" var="EDPPaymentMethods_NO_BANK_ACCOUNT_NO"/>
+		<fmt:message bundle="${storeText}" key="PROMOTION_CODE_EMPTY" var="PROMOTION_CODE_EMPTY"/>
+		<fmt:message bundle="${storeText}" key="PO_Number" var="PO_Number"/>
+		<fmt:message bundle="${storeText}" key="ERROR_PONumberEmpty" var="ERROR_PONumberEmpty"/>
+		<fmt:message bundle="${storeText}" key="ERROR_PONumberTooLong" var="ERROR_PONumberTooLong"/>
+
+		CheckoutPayments.setErrorMessage("EDPPaymentMethods_CANNOT_RECONCILE_PAYMENT_AMT", <wcf:json object="${EDPPaymentMethods_CANNOT_RECONCILE_PAYMENT_AMT}"/>);
+		CheckoutPayments.setErrorMessage("EDPPaymentMethods_PAYMENT_AMOUNT_LARGER_THAN_ORDER_AMOUNT", <wcf:json object="${EDPPaymentMethods_PAYMENT_AMOUNT_LARGER_THAN_ORDER_AMOUNT}"/>);
+		CheckoutPayments.setErrorMessage("EDPPaymentMethods_NO_ACCOUNT_NUMBER", <wcf:json object="${EDPPaymentMethods_NO_ACCOUNT_NUMBER}"/>);
+		CheckoutPayments.setErrorMessage("EDPPaymentMethods_INVALID_EXPIRY_DATE", <wcf:json object="${EDPPaymentMethods_INVALID_EXPIRY_DATE}"/>);
+		CheckoutPayments.setErrorMessage("EDPPaymentMethods_NO_AMOUNT", <wcf:json object="${EDPPaymentMethods_NO_AMOUNT}"/>);
+		CheckoutPayments.setErrorMessage("EDPPaymentMethods_AMOUNT_NAN", <wcf:json object="${EDPPaymentMethods_AMOUNT_NAN}"/>);
+		CheckoutPayments.setErrorMessage("EDPPaymentMethods_AMOUNT_LT_ZERO", <wcf:json object="${EDPPaymentMethods_AMOUNT_LT_ZERO}"/>);
+		CheckoutPayments.setErrorMessage("EDPPaymentMethods_NO_BILLING_ADDRESS", <wcf:json object="${EDPPaymentMethods_NO_BILLING_ADDRESS}"/>);
+		CheckoutPayments.setErrorMessage("EDPPaymentMethods_BILLING_ADDRESS_INVALID", <wcf:json object="${EDPPaymentMethods_BILLING_ADDRESS_INVALID}"/>);
+		CheckoutPayments.setErrorMessage("EDPPaymentMethods_CVV_NOT_NUMERIC", <wcf:json object="${EDPPaymentMethods_CVV_NOT_NUMERIC}"/>);
+		CheckoutPayments.setErrorMessage("EDPPaymentMethods_PAYMENT_AMOUNT_PROBLEM", <wcf:json object="${EDPPaymentMethods_PAYMENT_AMOUNT_PROBLEM}"/>);
+		CheckoutPayments.setErrorMessage("EDPPaymentMethods_NO_PAYMENT_SELECTED", <wcf:json object="${EDPPaymentMethods_NO_PAYMENT_SELECTED}"/>);
+		CheckoutPayments.setErrorMessage("EDPPaymentMethods_NO_ROUTING_NUMBER", <wcf:json object="${EDPPaymentMethods_NO_ROUTING_NUMBER}"/>);
+		CheckoutPayments.setErrorMessage("EDPPaymentMethods_NO_BANK_ACCOUNT_NO", <wcf:json object="${EDPPaymentMethods_NO_BANK_ACCOUNT_NO}"/>);
+		CheckoutPayments.setErrorMessage("PROMOTION_CODE_EMPTY", <wcf:json object="${PROMOTION_CODE_EMPTY}"/>);
+		CheckoutPayments.setErrorMessage("PO_NUMBER", <wcf:json object="${PO_NUMBER}"/>);
+		CheckoutPayments.setErrorMessage("ERROR_PONumberEmpty", <wcf:json object="${ERROR_PONumberEmpty}"/>);
+		CheckoutPayments.setErrorMessage("ERROR_PONumberTooLong", <wcf:json object="${ERROR_PONumberTooLong}"/>);
+		<c:if test="${isBrazilStore}"> 
+			CheckoutPayments.setErrorMessage("ERROR_CPFNumberEmpty", "<fmt:message bundle="${storeText}" key="ERROR_CPFNumberEmpty"/>");
+			CheckoutPayments.setErrorMessage("ERROR_CPFNumberInvalid", "<fmt:message bundle="${storeText}" key="ERROR_CPFNumberInvalid"/>");
+		</c:if>
+		CheckoutPayments.setLocale('<c:out value='${dojolocale}'/>');
+		CheckoutPayments.initializeOverallPaymentObjects();
+		CheckoutPayments.initializePaymentAreaDataDirtyFlags();
+	
+		wc.render.declareContext("paymentContext", {payment1: "empty", payment2: "empty", payment3: "empty", currentAreaNumber: "1", billingMode1: "none", billingMode2: "none", billingMode3: "none",currentTotal:"0"},	"");
+	});
+</script>
+
+<%-- get Person profile to determine if user is a 'Business' or 'Consumer' shopper --%>
+<c:if test="${isBrazilStore}">
+	<wcf:rest var="person" url="store/{storeId}/person/@self">
+		<wcf:var name="storeId" value="${WCParam.storeId}" encode="true"/>
+	</wcf:rest>
+	<c:set var="companyName" value="${person.companyName}" />
+</c:if>
+
+<c:forEach var="paymentInstance" varStatus="paymentInstructionCounter" items="${paymentInstruction.paymentInstruction}">
+	<c:if test="${!empty existingPI}">
+		<c:set var="existingPI" value="${existingPI},"/>
+	</c:if>
+	<c:set var="existingPI" value="${existingPI}${paymentInstance.piId}"/>
+	<c:if test="${paymentInstance.payMethodId eq 'Apruve'}">
+		<c:set var="existingApruvePI" value="${paymentInstance.piId}"/>
+	</c:if>
+	<%-- Unbound payment instructions --%>
+	<c:if test="${paymentInstance.piAmount == '0.00000'}">
+		<c:if test="${!empty unboundPI}">
+			<c:set var="unboundPI" value="${unboundPI},"/>
+		</c:if>
+		<c:set var="unboundPI" value="${unboundPI}${paymentInstance.piId}"/>
+	</c:if>
+</c:forEach>
+
+<!-- Declare the payment area controller associated with the paymentContext.. when the context changes
+this controller will be used and the paymentArea div will be populated with the required JSP file, based on the
+selection made...ex: if Visa brand is selected in payment1, then paymentArea1 will get populated with contents of
+Visa.jsp -->
+
+<!-- There will be three controllers by default.. paymentAreaController1,paymentAreaController2 and paymentAreaController3
+When paymentAreaController1 changes, the payment1 property of the context will be updated... So in that case for paymentAreaController1,
+controller.testForChangedRC(["payment1"])) will return true..and then we check for payment1 type ..if its VISA, then we load
+Visa.jsp.. similarly it works for other controllers -->
+<%--number of payment methods are : ${numberOfPaymentMethods}
+<c:set var="numberOfPaymentMethods" value="1"/>--%>
+<c:forEach var="i" begin="1" end="${numberOfPaymentMethods}">
+<script type="text/javascript">
+require(["dojo/domReady!"], function(){
+	wc.render.declareRefreshController({
+		id: "paymentAreaController${i}",
+		renderContext: wc.render.getContextById("paymentContext"),
+		url: "",
+		formId: ""
+
+		,modelChangedHandler: function(message, widget) {
+			var controller = this;
+			var renderContext = this.renderContext;
+			
+		}
+
+		,renderContextChangedHandler: function(message, widget) {
+			var controller = this;
+			var renderContext = this.renderContext;
+				if (renderContext.properties.currentPaymentArea == <c:out value="${i}"/>) {
+					if ((controller.testForChangedRC(["payment${i}"])  || controller.testForChangedRC(["paymentTCId${i}"])
+						|| (controller.testForChangedRC(["piAmount"])) && supportPaymentTypePromotions )
+					) {
+						if (renderContext.properties.payment${i} == "empty") {
+							viewName = "EmptySnippetView";
+						} else {
+							viewName = paymentSnippetsURLMap[renderContext.properties.payment${i}];
+						}
+						controller.url = viewName + '?storeId=<c:out value="${WCParam.storeId}" />&catalogId=<c:out value="${WCParam.catalogId}" />&langId=<c:out value="${WCParam.langId}" />';
+						
+						if (supportPaymentTypePromotions) {									
+							if (CheckoutPayments.numberOfPaymentMethods != 1) {
+								widget.refresh(renderContext.properties);
+							} else if (CheckoutPayments.numberOfPaymentMethods == 1 && <c:out value="${i}"/> < 2) {
+								widget.refresh(renderContext.properties);
+							}
+						} else {
+							widget.refresh(renderContext.properties);
+						}
+				  }
+				}
+		}
+		
+		,postRefreshHandler: function(widget) {
+			/**
+				if supportPaymentTypePromotions is true, CheckoutPayments.loadPaymentSnippet should have been called to 
+				reload the entire payment refresh area. This will also refresh the amount field. Hence, we don't need to
+				call update amount field again	(which will trigger a call to CheckoutPayments.loadPaymentSnippet ).
+			**/
+			if (!supportPaymentTypePromotions) { 
+				var orderTotal = dojo.byId("OrderTotalAmount").value;
+				CheckoutPayments.updateAmountFields(orderTotal);
+			}
+			
+			var widgetId = "paymentArea" + "<c:out value="${i}"/>";
+			TealeafWCJS.rebind(widgetId);
+			
+			//reset the billing address id in the billing address context to be the default selected address after payment method refresh
+			wc.render.updateContext('billingAddressDropDownBoxContext', {"billingAddress<c:out value="${i}"/>":(document.getElementsByName('billing_address_id'))[<c:out value="${i}"/>-1].value, 'areaNumber':<c:out value="${i}"/>});
+
+			cursor_clear();
+		}
+		
+	});
+	
+	CheckoutHelperJS.showHideEditBillingAddressLink((document.getElementsByName('billing_address_id'))[<c:out value="${i}"/>-1],<c:out value="${i}"/>);
+});
+</script>
+</c:forEach>
+
+<script type="text/javascript">
+	wc.render.declareRefreshController({
+			id: "orderTotalController",
+			renderContext: wc.render.getContextById("paymentContext"),
+			url: "", //not used. see CheckoutPayments.getTotalInJSON()
+			formId: ""
+	
+			,modelChangedHandler: function(message, widget) {
+				var controller = this;
+				var renderContext = this.renderContext;
+				if(message.actionId in order_updated || message.actionId == 'OrderItemAddressShipMethodUpdate' || message.actionId == 'AjaxPrepareOrderForShipChargeUpdate'
+					|| message.actionId == 'OrderItemAddressShipInstructionsUpdate' || message.actionId == 'OrderItemAddressShipInstructionsUpdate1' || message.actionId == 'AjaxUpdateOrderAfterAddressUpdate'
+					|| message.actionId == 'AjaxDeleteOrderItemForShippingBillingPage' || message.actionId == 'AjaxUpdateOrderItemsAddressId'){
+					//updating the total
+					CheckoutPayments.getTotalInJSON();
+				}
+			}
+					
+		});
+</script>
+
+<!-- We will submit the order in the next page..For now prepare the order and then start the checkOut process..In checkOut process
+add all the payment instructions and then redirect user to Order Summary Page.. There we will submit the order and get back
+the final confirmation -->
+
+<!-- BillingAddressDropDownDisplay.jspf uses this URL and rendercontext and refreshController -->
+<wcf:url var="AddressDisplayURL" value="AjaxAddressDisplayView" type="Ajax">
+	<wcf:param name="langId" value="${langId}" />						
+	<wcf:param name="storeId" value="${WCParam.storeId}" />
+	<wcf:param name="catalogId" value="${WCParam.catalogId}" />
+</wcf:url>
+
+<script type="text/javascript">
+wc.render.declareRefreshController({
+	id: "billingAdddressDisplayAreaController",
+	renderContext: wc.render.getContextById("billingAddressDropDownBoxContext"),
+	url: "${AddressDisplayURL}",
+	formId: ""
+
+	,renderContextChangedHandler: function(message, widget) {
+		var controller = this;
+		var renderContext = this.renderContext;
+		
+		var areaNumber = renderContext.properties["areaNumber"];	
+		var objectId = widget.objectId;
+		if (controller.testForChangedRC(["billingAddress"+areaNumber]) && objectId.charAt(objectId.length-1) == areaNumber) {
+				var addressId = renderContext.properties["billingAddress"+areaNumber];
+				widget.refresh({"addressId": addressId});
+			}
+		}
+
+	,postRefreshHandler: function(widget) {
+		var controller = this;
+		var renderContext = this.renderContext;
+		
+		var areaNumber = renderContext.properties["areaNumber"];
+		CheckoutHelperJS.showHideEditBillingAddressLink((document.getElementsByName('billing_address_id'))[areaNumber-1],areaNumber);
+		//clears the progress bar set from billingdropdowndisplay.jsp
+		cursor_clear();
+	}
+
+});
+</script>
+
+<flow:ifEnabled feature="AjaxCheckout">
+	<div dojoType="wc.widget.RefreshArea" id="orderTotalAmountArea" widgetId="orderTotalAmountArea" controllerId="orderTotalController" ></div>
+	<script type="text/javascript">dojo.addOnLoad(function() { 
+		parseWidget("orderTotalAmountArea"); 
+	});</script>
+</flow:ifEnabled>
+
+<c:set var="punchoutPaymentAllowed" value="false" />
+<flow:ifEnabled feature="PunchoutPayment">
+	<c:set var="punchoutPaymentAllowed" value="true" />
+</flow:ifEnabled>
+
+<c:set var="PurchaseOrderEntryField" value="true"/>
+<%@ include file="POSnippet.jspf" --%>
+<c:forEach var="i" begin="1" end="${numberOfPaymentMethods}" varStatus="status2">
+	
+	<c:choose>
+		<c:when test="${!quickCheckoutProfileForPayment}">
+			<c:set var="displayMethod" value="display:none" />
+			<c:set var="existingPaymentInstance" value="${paymentInstruction.paymentInstruction[i-1]}"/>
+			<c:set var="paymentMethodSelected" value="${existingPaymentInstance.payMethodId}"/>
+			<c:set var="existingProtocolData" value="${existingPaymentInstance.protocolData}"/>
+			<c:set var="paymentMethodBillingAddressId" value=""/>
+			<c:set var="piAmount" value="${existingPaymentInstance.piAmount}"/>
+			<%-- Show the block if this is first payment or if there are payment methods in subsequent blocks --%>
+			<c:if test="${!empty paymentMethodSelected || i == 1}">
+				<c:set var="displayMethod" value="display:block" />
+			</c:if>
+			<c:forEach var="protocolData" items="${existingProtocolData}">
+				<c:choose>
+					<c:when test="${protocolData.name eq 'cc_brand'}">
+						<c:set var="cc_brand" value="${protocolData.value}"/>
+					</c:when>
+					<c:when test="${protocolData.name eq 'cc_cvc'}">
+						<c:set var="cc_cvc" value="${protocolData.value}"/>
+					</c:when>
+					<c:when test="${protocolData.name eq 'expire_year'}">
+						<c:set var="expire_year" value="${protocolData.value}"/>
+					</c:when>
+					<c:when test="${protocolData.name eq 'expire_month'}">
+						<c:set var="expire_month" value="${protocolData.value}"/>
+					</c:when>
+	                <%-- Brazil Store, and since its not a quickCheckout, get the CPF number --%>
+					<c:when test="${isBrazilStore && (protocolData.name eq 'CPFNumber') }">
+						<c:set var="CPFNumber" value="${protocolData.value}"/>
+					</c:when>
+					<c:when test="${protocolData.name eq 'account'}">
+						<c:set var="account" value="${protocolData.value}"/>
+					</c:when>
+					<c:when test="${protocolData.name eq 'paymentTCId'}">
+						<c:set var="paymentTCId" value="${protocolData.value}"/>
+					</c:when>
+					<c:when test="${protocolData.name eq 'check_routing_number'}">
+						<c:set var="check_routing_number" value="${protocolData.value}"/>
+					</c:when>
+					<c:when test="${protocolData.name eq 'CheckAccount_number'}">
+						<c:set var="CheckAccount_number" value="${protocolData.value}"/>
+					</c:when>
+					<c:when test="${protocolData.name eq 'billing_address_id'}">
+						<c:set var="paymentMethodBillingAddressId" value="${protocolData.value}"/>
+					</c:when>
+			        <%-- capture the selected isntallment option for the order --%>
+					<c:when test="${isBrazilStore && protocolData.name eq 'installmentOption'}">
+						<c:set var="installmentOption" value="${protocolData.value}"/>
+					</c:when>
+			        <%-- capture the selected number of installments for the order --%>
+					<c:when test="${isBrazilStore && protocolData.name eq 'numberOfInstallments'}">
+						<c:set var="numberOfInstallments" value="${protocolData.value}"/>
+					</c:when>
+					<%-- Apruve requirement - start --%>	
+					<c:when test="${protocolData.name eq 'apruveId' }">
+					<c:set var="apruveId" value="${protocolData.value}"/>
+					</c:when>
+					<%-- Apruve requirement - end --%>						
+				</c:choose>
+			</c:forEach>
+				<%-- Apruve requirement - start --%>
+							<c:set var="selectedPayType" value=""/>
+							<c:if test="${paymentMethodSelected == 'Apruve'}">
+								<c:set var="selectedPayType" value="PP"/>
+								<c:set var="apruvePaymentExists" value="true"/>
+							</c:if>
+					<%-- Apruve requirement - end --%>
+	        <%-- Since its not a quickCheckout and if its a Brazil Store with no CPF#, then we need to get the CPF number from the OrderProfile --%>
+			<c:if test="${isBrazilStore && empty CPFNumber}">
+				<wcf:rest var="qcOrderListBean" url="store/{storeId}/order" scope="request">
+					<wcf:var name="storeId" value="${WCParam.storeId}" encode="true"/>
+					<wcf:param name="q" value="orderProfile"/>
+					<wcf:param name="userId" value="${CommandContext.userId}"/>
+					<wcf:param name="retrievalOrderStatus" value="Q"/>
+					<wcf:param name="profileName" value="IBM_Summary_PaymentInfo"/>
+				</wcf:rest>
+				<c:forEach items="${qcOrderListBean.resultList}" var="prof_orderBean" varStatus="status">
+					<c:if test="${!empty prof_orderBean.paymentInfo}">
+					<c:set var="CPFNumber" value="${prof_orderBean.paymentInfo.CPFNumber}"/>
+					</c:if>
+				</c:forEach>
+
+			</c:if>
+			
+		</c:when>
+		<c:otherwise>
+			<%-- we should use quick checkout profile..--%>
+			<c:set var="displayMethod" value="display:none" />
+			<c:set var="paymentMethodSelected" value=""/>
+			<c:set var="piAmount" value=""/>
+			<%-- quick checkout profile will have only one payment option.. show the first div.. --%>
+			<c:if test="${i == 1}">
+				<c:set var="displayMethod" value="display:block" />
+				<%-- Use order list data bean and get protocol data --%>
+				<%-- get the "profile" order containing the default payment and billing info --%>
+				<wcf:rest var="orderListBean" url="store/{storeId}/order" scope="request">
+					<wcf:var name="storeId" value="${WCParam.storeId}" encode="true"/>
+					<wcf:param name="q" value="orderProfile"/>
+					<wcf:param name="userId" value="${CommandContext.userId}"/>
+					<wcf:param name="retrievalOrderStatus" value="Q"/>
+					<wcf:param name="profileName" value="IBM_Summary_PaymentInfo"/>
+				</wcf:rest>
+				<c:forEach items="${orderListBean.resultList}" var="prof_orderBean" varStatus="status">
+					<c:set var="payInfo" value="${prof_orderBean.paymentInfo}" />
+					<c:if test="${!empty payInfo}">
+						<c:set var="existingProtocolData" value="${payInfo}"  scope="request"/>
+					</c:if>
+					<c:forEach var="temp" items="${existingProtocolData}">
+						<c:choose>
+							<c:when test="${temp.key eq 'cc_brand'}">
+								<c:set var="cc_brand" value="${temp.value}"/>
+							</c:when>
+							<c:when test="${temp.key eq 'cc_cvc'}">
+								<c:set var="cc_cvc" value="${temp.value}"/>
+							</c:when>
+							<c:when test="${temp.key eq 'expire_year'}">
+								<c:set var="expire_year" value="${temp.value}"/>
+							</c:when>
+							<c:when test="${temp.key eq 'expire_month'}">
+								<c:set var="expire_month" value="${temp.value}"/>
+							</c:when>
+							<c:when test="${isBrazilStore && (temp.key eq 'CPFNumber')}">
+								<c:set var="CPFNumber" value="${temp.value}"/>
+							</c:when>
+							<c:when test="${temp.key eq 'account'}">
+								<wcf:rest var="edpMaskBean" url="store/{storeId}/cart/@self/payment_instruction/sensitive_data_mask_by_plain_string">
+									<wcf:var name="storeId" value="${WCParam.storeId}" encode="true"/>
+									<wcf:param name="plainString" value="${temp.value}"/>
+								</wcf:rest>
+								<c:set var="account" value="${edpMaskBean.resultList[0].maskedString}" />
+								<c:set var="unmaskedAccount" value="${temp.value}"/>
+							</c:when>
+							<c:when test="${temp.key eq 'check_routing_number'}">
+								<c:set var="check_routing_number" value="${temp.value}"/>
+							</c:when>
+							<c:when test="${temp.key eq 'CheckAccount_number'}">
+								<c:set var="CheckAccount_number" value="${temp.value}"/>
+							</c:when>
+							<c:when test="${temp.key eq 'payment_method'}">
+								<c:set var="paymentMethodSelected" value="${temp.value}"/>
+							</c:when>
+					        <%-- capture the selected isntallment option for the order --%>
+							<c:when test="${isBrazilStore && temp.key eq 'installmentOption'}">
+								<c:set var="installmentOption" value="${temp.value}"/>
+							</c:when>
+			        		<%-- capture the selected number of installments for the order --%>
+							<c:when test="${isBrazilStore && temp.key eq 'numberOfInstallments'}">
+								<c:set var="numberOfInstallments" value="${temp.value}"/>
+							</c:when>
+					<%-- Apruve requirement - start --%>	
+							<c:when test="${protocolData.name eq 'apruveId' }">
+								<c:set var="apruveId" value="${protocolData.value}"/>
+							</c:when>
+					<%-- Apruve requirement - end --%>								
+						</c:choose>
+					</c:forEach>
+					<c:set var="paymentMethodBillingAddressId" value="${prof_orderBean.billingAddressDataBean.addressId}"/>
+				</c:forEach>
+				<%-- entire amount will be added to the first payment option in quick checkout profile --%>
+				<fmt:parseNumber var="piAmount" value="${order.grandTotal}"/>
+				<c:set var="piAmount" value="${piAmount}"/>
+			</c:if>
+		</c:otherwise>
+	</c:choose>
+
+	<div id="paymentSection<c:out value="${i}"/>" style="<c:out value="${displayMethod}"/>" >
+
+		<div id="WC_CheckoutPaymentsAndBillingAddressf_div_1_<c:out value='${status2.count}'/>">
+			<div id="billing_<c:out value='${i}'/>" class="billing<c:if test="${i >= 2}"> billing_border</c:if>">
+				<c:if test="${numberOfPaymentMethods > 1}">
+					<!-- Payment method number (payment1, payment2...) will be shown only if there are more than 1 payments..-->
+					<div id="paymentHeading<c:out value="${i}"/>" class="payment_heading"> 
+						<fmt:message bundle="${storeText}" key="PAYMENT_CAPS"/>
+						<span id="numOfPaymentsIndicator<c:out value="${i}"/>"> <c:out value="${i}:"/></span>
+					</div>
+				</c:if>
+				<form name="PaymentForm<c:out value="${i}"/>" id="PaymentForm<c:out value="${i}"/>" method="post" action="" onsubmit="javascript: return false;">
+					<c:set var="paymentAreaNumber" value="${i}"/>
+					<input type="hidden" value="<c:out value='${quickCheckoutProfileForPayment}'/>" id="quickCheckoutProfileForPayment_<c:out value='${i}'/>" name="quickCheckoutProfileForPayment"/>
+					<input type="hidden" value="<c:out value='${paymentMethodBillingAddressId}'/>" id="selectedAddressId_<c:out value="${i}"/>" name="selectedAddressId_<c:out value="${i}"/>" />
+					<input type="hidden" name="authToken" value="${authToken}" id="WC_CheckoutPaymentsAndBillingAddressf_input_authToken_<c:out value='${i}'/>"/>
+					<input type="hidden" name="piId" value="" id="WC_CheckoutPaymentsAndBillingAddressf_piId_<c:out value='${i}'/>"/>
+					<input type="hidden" name="paymentDataEditable" value="" id="WC_CheckoutPaymentsAndBillingAddressf_paymentDataEditable_<c:out value='${i}'/>"/>
+					<input type="hidden" name="orderId" value="${order.orderId}" id="WC_CheckoutPaymentsAndBillingAddressf_orderId_<c:out value='${i}'/>"/>
+					<%-- Apruve requirement - start --%>
+					<input type="hidden" name="apruveId" id="WC_CheckoutPaymentsAndBillingAddressf_apruveId_<c:out value='${i}'/>" value="${apruveId }"/>
+					<%-- Apruve requirement - end --%>
+					<div id="billingAddress<c:out value="${i}"/>" class="billing_address_container">
+						<div dojoType="wc.widget.RefreshArea" id = "billingAddressSelectBoxArea_<c:out value='${i}'/>" widgetId="billingAddressSelectBoxArea_<c:out value='${i}'/>" objectId='<c:out value="${i}"/>' controllerId="billingAddressSelectBoxAreaController" >	
+							<%out.flush();%>
+								<c:import url="${env_jspStoreDir}/ShoppingArea/CheckoutSection/SingleShipment/BillingAddressDropDownDisplay.jsp">
+									<c:param value="${paymentMethodBillingAddressId}" name="selectedAddressId"/>
+									<c:param name="paymentAreaNumber" value="${i}"/>
+									<c:param name="paymentMethodSelected" value="${paymentMethodSelected}"/>
+								</c:import>
+							<%out.flush();%>
+						</div>
+					</div>
+					<script type="text/javascript">
+						dojo.addOnLoad(function() { 
+							var widgetText = "billingAddressSelectBoxArea_" + "<c:out value="${i}"/>";
+							parseWidget(widgetText);
+							CheckoutPayments.setNumPaymentIndicator();
+							
+						});
+					</script>
+					<div class="billing_method" id="WC_CheckoutPaymentsAndBillingAddressf_div_2_<c:out value='${status2.count}'/>">
+					
+						<p class="title"><fmt:message bundle="${storeText}" key="BILL_BILLING_METHOD_COLON"/></p>
+						<label for="payMethodId_<c:out value='${i}'/>"><span class="spanacce"><fmt:message bundle="${storeText}" key='ACCE_BILLING_METHOD2'><fmt:param value='${i}'/></fmt:message></span></label>
+						<p>
+							<input type="hidden" name="storeId" value="<c:out value="${storeId}"/>" id="WC_CheckoutPaymentsAndBillingAddressf_inputs_1_<c:out value='${status2.count}'/>"/>
+							<input type="hidden" name="catalogId" value="<c:out value="${catalogId}"/>" id="WC_CheckoutPaymentsAndBillingAddressf_inputs_2_<c:out value='${status2.count}'/>"/>
+							<input type="hidden" name="langId" value="<c:out value="${langId}"/>" id="WC_CheckoutPaymentsAndBillingAddressf_inputs_3_<c:out value='${status2.count}'/>"/>
+							<input type="hidden" name="existingPiId" value="<c:out value="${existingPI}"/>" id="WC_CheckoutPaymentsAndBillingAddressf_inputs_4_<c:out value='${status2.count}'/>"/>
+							<input type="hidden" name="unboundPiId" value="<c:out value="${unboundPI}"/>" id="WC_CheckoutPaymentsAndBillingAddressf_inputs_4b_<c:out value='${status2.count}'/>"/>
+							<jsp:useBean id="now" class="java.util.Date" />
+							<input type="hidden" name="curr_year" value="<c:out value='${now.year + 1900}'/>" id="WC_CheckoutPaymentsAndBillingAddressf_inputs_5_<c:out value='${status2.count}'/>"/>
+							<input type="hidden" name="curr_month" value="<c:out value='${now.month + 1}'/>" id="WC_CheckoutPaymentsAndBillingAddressf_inputs_6_<c:out value='${status2.count}'/>"/>
+							<input type="hidden" name="curr_date" value="<c:out value='${now.date}'/>" id="WC_CheckoutPaymentsAndBillingAddressf_inputs_7_<c:out value='${status2.count}'/>"/>
+							<%-- Apruve requirement - start --%>
+							<input type="hidden" name="apruvePaymentExists" id="apruvePaymentExists" value="${apruvePaymentExists}"/>
+							<%-- here adding Apruve Payment option only for the first payment block --%>
+							<c:if test="${i == 1}">
+							<br>
+							<wcf:url var="OrderShippingBillingViewURL" value="OrderShippingBillingView">
+								<wcf:param name="storeId" value="${WCParam.storeId}" />						
+								<wcf:param name="catalogId" value="${WCParam.catalogId}" />
+								<wcf:param name="langId" value="${WCParam.langId}" />
+							</wcf:url>
+							<wcf:url var="PIRemoveURL" value="PIRemove">
+								<wcf:param name="orderId" value="${order.orderId}" />						
+								<wcf:param name="piId" value="${existingApruvePI}" />
+								<wcf:param name="URL" value="${OrderShippingBillingViewURL}" />
+							</wcf:url>
+							<%-- Added Apruve Payment Options --%>
+									<input type="radio" id="PP" name="payType" required ${selectedPayType eq 'PP' ? 'checked="checked"' : ''} value="payMethodId_<c:out value='${i}'/>" onclick="toggleCheckoutOption(this);CheckoutPayments.updatePaymentObject(<c:out value='${i}'/>, 'piAmount');" style="display: inline-block;vertical-align: middle;"/>&nbsp&nbsp
+											<c:choose>
+											<c:when test="${paymentMethodSelected == 'Apruve' }">
+												Apruve Payment(Apruve Order Id : ${apruveId }, <a href="${PIRemoveURL }" style="color:blue"> to use different apruve method</a>)
+											</c:when>
+											<c:otherwise>
+												Apruve Payment
+											</c:otherwise>
+											</c:choose>
+											<br><br>
+									<input type="radio" id="CC" name="payType" required ${selectedPayType ne 'PP' ? 'checked="checked"' : ''} value="payMethodId_<c:out value='${i}'/>" onclick="toggleCheckoutOption(this);" style="display: inline-block;vertical-align: middle;"/>&nbsp&nbspOther Payments
+									<br><br>
+								<%-- Sending the Apruve PayMethodId if there exists a Apruve Payment Method--%>
+									<div id="refForPayMethod">
+										<c:if test="${paymentMethodSelected == 'Apruve'}">
+											<input type="hidden" value="${paymentMethodSelected}"  name="payMethodId" id="payMethodIdText_<c:out value='${i}'/>"/>
+										</c:if>
+									</div>
+							</c:if>
+					
+							<div>
+							 <%-- Not displaying the Other Payment Options dropdown, if there exists a Apruve Payment  --%>
+								<!-- Payment type promotion: onchange call the function CheckoutPayments.updateUnboundPaymentToOrder(); -->
+								<select <c:if test="${apruvePaymentExists eq 'true' && i == 1}">style="display: none;"</c:if> class="drop_down_billing" name="payMethodId" id="payMethodId_<c:out value='${i}'/>" 
+									onchange="JavaScript:this.blur(); 
+									CheckoutHelperJS.setOrderId('<c:out value='${usablePayments.orderIdentifier.uniqueID}'/>');
+									 
+									if ( (typeof(supportPaymentTypePromotions) == 'undefined') || (typeof(supportPaymentTypePromotions) != 'undefined' && !supportPaymentTypePromotions) ) { 
+										CheckoutPayments.loadPaymentSnippet(this, <c:out value='${i}'/>); 
+										CheckoutPayments.updatePaymentObject(<c:out value='${i}'/>, 'payMethodId');
+									}
+									<flow:ifEnabled feature="AjaxCheckout">
+										if (typeof(supportPaymentTypePromotions) != 'undefined' && supportPaymentTypePromotions) {
+											if (CheckoutPayments.numberOfPaymentMethods == 1) {
+												CheckoutPayments.updateUnboundPaymentToOrder(<c:out value="${i}"/>);
+											} else {
+												CheckoutPayments.loadPaymentSnippet(this, <c:out value='${i}'/>); 
+												CheckoutPayments.updatePaymentObject(<c:out value='${i}'/>, 'payMethodId');
+											}
+										}
+									</flow:ifEnabled>
+				                   
+									<flow:ifDisabled feature="AjaxCheckout">
+										if (supportPaymentTypePromotions) {
+											CheckoutPayments.updateUnboundPaymentToOrder(<c:out value="${i}"/>);
+										}
+									</flow:ifDisabled>		                   
+				                   
+				                   "  >
+									<!--  Add one default Payment select option -->
+									<option value="empty" selected="selected"><fmt:message bundle="${storeText}" key="BILL_BILLING_SELECT_BILLING_METHOD"/></option>
+									<!-- Loop through available payment options and populate the select box -->
+									<c:set var="attrPageName" value="${env_jspStoreDir}/Snippets/EDP/PaymentMethods/Empty.jsp" />
+									<c:forEach var="payment" varStatus="paymentCounter" items="${usablePaymentInfo.usablePaymentInformation}">
+									
+									<%-- Not displaying the Apruve Payment method in the drop down with the Other Payment methods--%>
+										<c:if test="${payment.paymentMethodName != 'Apruve'}">
+											<c:set var="currentPaymentMethodName" value="${payment.paymentMethodName}"/>
+											<c:if test="${currentPaymentMethodName != 'PayInStore' && currentPaymentMethodName != 'CompatiblePayment' && (currentPaymentMethodName ne 'SimplePunchout' or (currentPaymentMethodName eq 'SimplePunchout' and punchoutPaymentAllowed))}">
+												<c:if test="${paymentMethodSelected == payment.paymentMethodName}">
+													<c:set var="selectStr" value='selected="selected"' />
+													<c:set var="attrPageName" value="${env_jspStoreDir}/Snippets/EDP/PaymentMethods/${payment.xumet_attrPageName}.jsp" />
+												</c:if>
+												<option <c:out value="${selectStr}" escapeXml="false"/> value="${currentPaymentMethodName}<c:if test='${!empty payment.paymentTermConditionId}'><c:out value='_${payment.paymentTermConditionId}'/></c:if>">${payment.description} </option>
+												<c:set var="selectStr" value="" />
+											</c:if>
+										</c:if>
+									</c:forEach>
+								</select>
+							</div>
+							<input type="hidden" name="buyerOrgDN" value="${order.organizationIdentifier.distinguishedName}"/>
+							<%-- Added a Sample Payment Snippet for Apruve Payments --%>
+							<c:if test="${paymentMethodSelected == 'Apruve'}">
+								<c:set var="attrPageName" value="${env_jspStoreDir}/Snippets/EDP/PaymentMethods/StandardApruve.jsp" />
+							</c:if>
+							<%-- <wcbase:useBean classname="com.apruve.OrderInformationDataBean" id="secureHash" scope="request">
+								<c:set property="merchant_order_id" value="${order.orderId}" target="${secureHash}" />
+								<c:set property="storeId" value="${storeId}" target="${secureHash}" />
+								<c:set property="langId" value="${WCParam.langId}" target="${secureHash}" />
+							</wcbase:useBean>--%>
+							
+							<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+							<%-- Apruve requirement - end --%>
+							<!-- This div is for Web2.0 Style -->
+							<flow:ifEnabled feature="AjaxCheckout">
+								<div dojoType="wc.widget.RefreshArea" widgetId="paymentArea<c:out value="${i}"/>" controllerId="paymentAreaController<c:out value="${i}"/>" id="paymentArea<c:out value="${i}"/>">
+									<c:choose>
+										<c:when test="${isBrazilStore}"><!-- Brazil store passing along CPF# param -->
+											<%out.flush();%>
+												<c:import url="${attrPageName}">
+													<c:param name="payMethodId" value="${paymentMethodSelected }"/>
+													<c:param name="paymentAreaNumber" value= "${paymentAreaNumber}"/>
+													<c:param name="cc_brand" value="${cc_brand}"/>
+													<c:param name="cc_cvc" value="${cc_cvc}"/>
+													<c:param name="expire_year" value="${expire_year}"/>
+													<c:param name="expire_month" value="${expire_month}"/>
+													<c:param name="CPFNumber" value="${CPFNumber}"/>
+													<c:param name="account" value="${account}"/>
+													<c:param name="check_routing_number" value="${check_routing_number}"/>
+													<c:param name="CheckAccount_number" value="${CheckAccount_number}"/>
+													<c:param name="piAmount" value="${piAmount}"/>
+													<c:param name="edp_ProtocolData" value="${existingProtocolData}"/>
+													<c:param name="paymentTCId" value="${paymentTCId}"/>
+													<c:param name="numberOfInstallments" value="${numberOfInstallments}"/>
+												</c:import>
+											<%out.flush();%>
+										</c:when>
+										<c:otherwise>
+											<%out.flush();%>
+												<c:import url="${attrPageName}">
+													<%-- Apruve requirement - start --%>
+												   		 <c:param name="payMethodId" value="${paymentMethodSelected }"/>
+												   	<%-- Apruve requirement - end --%>
+													<c:param name="paymentAreaNumber" value= "${paymentAreaNumber}"/>
+													<c:param name="cc_brand" value="${cc_brand}"/>
+													<c:param name="cc_cvc" value="${cc_cvc}"/>
+													<c:param name="expire_year" value="${expire_year}"/>
+													<c:param name="expire_month" value="${expire_month}"/>
+													<c:param name="account" value="${account}"/>
+													<c:param name="check_routing_number" value="${check_routing_number}"/>
+													<c:param name="CheckAccount_number" value="${CheckAccount_number}"/>
+													<c:param name="piAmount" value="${piAmount}"/>
+													<c:param name="edp_ProtocolData" value="${existingProtocolData}"/>
+													<c:param name="paymentTCId" value="${paymentTCId}"/>
+												</c:import>
+											<%out.flush();%>
+										</c:otherwise>
+									</c:choose>
+								</div>
+								<script type="text/javascript">
+									dojo.addOnLoad(function() { 
+										var widgetText = "paymentArea" + "<c:out value="${i}"/>";
+										parseWidget(widgetText);
+									});
+								</script>
+							</flow:ifEnabled>
+							<!-- This div is for Web1.0 style.. initially this div will be empty..when the form is submitted the innerHTML of the selected payment form div (defined below) will be set to this div's inner HTML .. bcs if all the divs are defined here and even if they are hidden, the fields inside this div will be submitted as part of the form submission.. we dont want to submit fields of all the payment options..so this workaround...-->
+							<flow:ifDisabled feature="AjaxCheckout">
+								<div id="paymentFormDiv<c:out value="${i}"/>" name = "paymentFormDiv<c:out value="${i}"/>">
+									<c:choose>
+										<c:when test="${isBrazilStore}"><!-- Brazil store passing along CPF# param -->
+											<%out.flush();%>
+												<c:import url="${attrPageName}">
+													<%-- Apruve requirement - start --%>
+													<%-- Sending PayMethod Id to the PaymentAmount.jspf, to prepoluate the order total amount in the text box --%>
+												   		 <c:param name="payMethodId" value="${paymentMethodSelected }"/>
+												   	<%-- Apruve requirement - end --%>
+													<c:param name="paymentAreaNumber" value= "${paymentAreaNumber}"/>
+													<c:param name="cc_brand" value="${cc_brand}"/>
+													<c:param name="cc_cvc" value="${cc_cvc}"/>
+													<c:param name="expire_year" value="${expire_year}"/>
+													<c:param name="expire_month" value="${expire_month}"/>
+													<c:param name="CPFNumber" value="${CPFNumber}"/>
+													<c:param name="account" value="${account}"/>
+													<c:param name="check_routing_number" value="${check_routing_number}"/>
+													<c:param name="CheckAccount_number" value="${CheckAccount_number}"/>
+													<c:param name="piAmount" value="${piAmount}"/>
+													<c:param name="edp_ProtocolData" value="${existingProtocolData}"/>
+													<c:param name="paymentTCId" value="${paymentTCId}"/>
+													<c:param name="numberOfInstallments" value="${numberOfInstallments}"/>
+												</c:import>
+											<%out.flush();%>
+										</c:when>
+										<c:otherwise>
+											<%out.flush();%>
+												<c:import url="${attrPageName}">
+													<c:param name="paymentAreaNumber" value= "${paymentAreaNumber}"/>
+													<c:param name="cc_brand" value="${cc_brand}"/>
+													<c:param name="cc_cvc" value="${cc_cvc}"/>
+													<c:param name="expire_year" value="${expire_year}"/>
+													<c:param name="expire_month" value="${expire_month}"/>
+													<c:param name="account" value="${account}"/>
+													<c:param name="check_routing_number" value="${check_routing_number}"/>
+													<c:param name="CheckAccount_number" value="${CheckAccount_number}"/>
+													<c:param name="piAmount" value="${piAmount}"/>
+													<c:param name="edp_ProtocolData" value="${existingProtocolData}"/>
+													<c:param name="paymentTCId" value="${paymentTCId}"/>
+												</c:import>
+											<%out.flush();%>
+										</c:otherwise>
+									</c:choose>
+								</div>
+							</flow:ifDisabled>
+						</p>
+					</div>
+					
+					<c:if test="${isBrazilStore && empty companyName}"><!-- if empty, then show CPF# since they are a 'Consumer' shopper, 'Business' Shopper will always have a company name -->
+						<div id="WC_CPF_div_1_<c:out value='${status2.count}'/>">
+							<div class="required-field" id="WC_CPF_div_2_<c:out value='${status2.count}'/>"> *</div>
+							<p class="title">
+								<label for="CPF_input_1_<c:out value='${status2.count}'/>"><fmt:message bundle="${storeText}" key="CPF_NUMBER"/></label>
+							</p>
+							<input type="text" name="CPFNumber" value="<c:out value='${CPFNumber}'/>" maxlength="11" size="15" id="CPF_input_1_<c:out value='${status2.count}'/>"  />
+						</div>
+					</c:if>
+					
+					<!-- Payment Method Ends Here -->
+					<br clear="all" />
+				</form>
+				<%-- Apruve requirement - start --%>
+				<form id="apruveForm" action="ZCReturnFromApruve" method="post">
+ 								<input type="hidden" name="apruveId" id="apruveId" value=""/>
+ 								<input type="hidden" name="URL" id="URL" value="SingleShipmentOrderSummaryView"/>
+ 								<input type="hidden" name="orderId" id="orderId" value="${order.orderId}"/>
+ 								<input type="hidden" name="catalogId" value="<c:out value="${catalogId}"/>" id="${catalogId}"/>
+ 								<input type="hidden" name="apruve_billing_address_id" id="apruve_billing_address_id" value=""/>
+ 							</form>
+				<%-- Apruve requirement - end --%>			
+			</div>
+		</div>
+	</div>
+	<%-- Apruve requirement - start --%>
+	<script type="text/javascript">
+							
+							apruve.registerApruveCallback(apruve.APRUVE_LAUNCHED_EVENT,function(){
+							//apruve.setOrder(${secureHash.jsonObject}, '${secureHash.hashMap}');
+							   	 var postData = {merchant_order_id :  ${order.orderId}, storeId : ${storeId}, langId : ${WCParam.langId}};
+								    
+								   var url = "ZCOrderInformation";
+								   
+								   
+								$.ajax({
+								        async: false,
+								        type: 'GET',
+								        dataType: 'json',
+								        url: "ZCOrderInformation",
+								        data: postData,
+								        success: function(data) {
+								        if(data.secureHashMap != null)
+									    		apruve.setOrder(data.jsonObj,data.secureHashMap );
+							 	        },
+							 	        error : function(data){
+							 	        	console.log('Error in ajax cal');
+							 	        }
+								    });	
+								    
+								
+							     });
+							     $("#apruve_billing_address_id").val(document.getElementsByName('billing_address_id_1'));
+							     apruve.registerApruveCallback(apruve.APRUVE_COMPLETE_EVENT, function (orderId) {
+							         // The order ID is passed into your callback function as a parameter
+							         // Use any mechanism, such as a hidden form field, to post the ID to your server.
+							         //alert('value in form : '+$("#apruveId").val());
+							         //alert(orderId);
+							         $("#apruveId").val(orderId);
+							         //alert('value in form2 : '+$("#apruveId").val());
+							         $("#apruveForm")[0].submit(); 
+							     });
+ 							</script>
+ 	<%-- Apruve requirement - end --%>						
+	<flow:ifDisabled feature="AjaxCheckout"> 
+		<!-- This div is for Web1.0 style -->
+		<!-- Now create one div which holds the form for each of the payment methods.. -->
+		<!-- One for please Select option -->
+		<c:set var ="edp_PIInfo_Div" value="PIInfo_Div_empty_${paymentAreaNumber}" scope="request"/>
+		<div style="visibility: visible; display: none;" id="<c:out value="${edp_PIInfo_Div}"/>">
+			<c:set var="attrPageName" value="${env_jspStoreDir}/Snippets/EDP/PaymentMethods/Empty.jsp" />
+			
+			<%out.flush();%>
+			<c:import url="${attrPageName}">
+				<c:param name="paymentAreaNumber" value= "${paymentAreaNumber}"/>
+			</c:import>
+			<%out.flush();%>
+		</div> 
+		<c:forEach var="paymentInstance" items="${usablePaymentInfo.usablePaymentInformation}" varStatus="paymentCounter1">
+			<c:if test="${paymentInstance.paymentMethodName != 'PayInStore' && paymentInstance.paymentMethodName != 'CompatiblePayment'}">
+				<!-- This is used by billingAddressDropdowndisplay page -->
+				<c:set var="paymentMethodSelected" value="${payment.paymentMethodName}"/> 
+				<c:choose>
+					<c:when test="${!empty paymentInstance.paymentTermConditionId}">
+						<c:set var ="edp_PIInfo_Div" value="PIInfo_Div_${paymentInstance.paymentMethodName}_${paymentAreaNumber}_${paymentInstance.paymentTermConditionId}" scope="request"/>
+					</c:when>
+					<c:otherwise>
+						<c:set var ="edp_PIInfo_Div" value="PIInfo_Div_${paymentInstance.paymentMethodName}_${paymentAreaNumber}" scope="request"/>
+					</c:otherwise>
+				</c:choose>
+					
+				<div style="visibility: visible; display: none;" id="<c:out value="${edp_PIInfo_Div}"/>" >
+					<c:set var="attrPageName" value="${env_jspStoreDir}/Snippets/EDP/PaymentMethods/${paymentInstance.xumet_attrPageName}.jsp" />
+					<%out.flush();%>
+					<c:import url="${attrPageName}">
+						<c:param name="paymentAreaNumber" value= "${paymentAreaNumber}"/>
+						<c:param name="paymentTCId" value="${paymentInstance.paymentTermConditionId}"/>
+						<c:param name="buyerOrgDN" value="${order.orgDistinguishedName}"/>
+					</c:import>
+					<%out.flush();%>
+				</div>
+			</c:if>
+		</c:forEach>
+	</flow:ifDisabled>
+</c:forEach>
+
+<!-- END CheckoutPaymentsAndBillingAddress.jspf -->
+
+<%}catch(Exception e){System.out.println("exception in checkoutPayments is : "+e.getMessage());e.printStackTrace();}%>
